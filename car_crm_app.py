@@ -5,34 +5,133 @@ from datetime import datetime, date
 
 st.set_page_config(page_title="Car Flipping CRM", layout="wide")
 
-# Set background styling
+# Professional Business Styling
 st.markdown("""
     <style>
+    /* Main app background - Professional gradient */
     .stApp {
-        background-image: url('https://images.unsplash.com/photo-1592194996308-7b43878e84a6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80');
-        background-size: cover;
-        background-repeat: no-repeat;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         background-attachment: fixed;
     }
-    .css-18e3th9 {
-        background-color: rgba(255, 255, 255, 0.85) !important;
-        border-radius: 10px;
-        padding: 20px;
+    
+    /* Content containers */
+    .main .block-container {
+        background-color: rgba(255, 255, 255, 0.95);
+        border-radius: 15px;
+        padding: 2rem;
+        margin: 1rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
     }
+    
+    /* Header styling */
     h1 {
-        color: #ff1e1e;
+        color: #2c3e50;
         text-align: center;
-        font-size: 3em;
-        font-weight: bold;
-        text-shadow: 1px 1px 2px #000;
+        font-size: 2.8em;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        text-shadow: none;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    .stSubheader, .stTextInput > label, .stDateInput > label, .stNumberInput > label, .stTextArea > label, .stSelectbox > label {
+    
+    /* Subheader styling */
+    .stSubheader {
+        color: #34495e;
         font-weight: 600;
+        font-size: 1.4em;
+        margin: 1.5rem 0 1rem 0;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #3498db;
     }
+    
+    /* Form and input styling */
+    .stTextInput > label, .stDateInput > label, .stNumberInput > label, 
+    .stTextArea > label, .stSelectbox > label {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 0.95em;
+    }
+    
+    /* Button styling */
+    .stButton > button {
+        background: linear-gradient(45deg, #3498db, #2980b9);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .stButton > button:hover {
+        background: linear-gradient(45deg, #2980b9, #3498db);
+        box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        transform: translateY(-2px);
+    }
+    
+    /* DataFrame styling */
     .stDataFrame {
-        background-color: rgba(255,255,255,0.95);
-        border-radius: 10px;
-        padding: 10px;
+        background-color: rgba(255,255,255,0.98);
+        border-radius: 12px;
+        padding: 1rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        border: 1px solid #e0e6ed;
+    }
+    
+    /* Form container styling */
+    .stForm {
+        background-color: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    /* Sidebar styling */
+    .css-1d391kg {
+        background-color: rgba(44, 62, 80, 0.95);
+        backdrop-filter: blur(10px);
+    }
+    
+    /* Success/Error message styling */
+    .stSuccess {
+        background-color: #d4edda;
+        border-left: 4px solid #27ae60;
+        border-radius: 8px;
+    }
+    
+    .stError {
+        background-color: #f8d7da;
+        border-left: 4px solid #e74c3c;
+        border-radius: 8px;
+    }
+    
+    /* Professional card styling for market data */
+    .market-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        border-left: 4px solid #3498db;
+        transition: all 0.3s ease;
+    }
+    
+    .market-card:hover {
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        transform: translateY(-2px);
+    }
+    
+    /* Professional metric styling */
+    .metric-container {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }
     </style>
 """, unsafe_allow_html=True)
@@ -100,36 +199,59 @@ try:
 except FileNotFoundError:
     st.sidebar.write("Logo not found - place logo.png in app directory")
 
-# Light/Dark theme toggle
-mode = st.sidebar.radio("🌗 Theme Mode", ["Light", "Dark"])
-if mode == "Dark":
+# Professional Light/Dark theme toggle
+mode = st.sidebar.radio("🌗 Theme Mode", ["Professional Light", "Executive Dark"])
+if mode == "Executive Dark":
     st.markdown("""
     <style>
-    body {
-        background-color: #1e1e1e;
-        color: white;
-    }
     .stApp {
-        background-color: #1e1e1e;
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    }
+    .main .block-container {
+        background-color: rgba(44, 62, 80, 0.95);
         color: white;
     }
     .stDataFrame {
-        background-color: rgba(30,30,30,0.95);
+        background-color: rgba(52, 73, 94, 0.95);
         color: white;
+        border: 1px solid #5d6d7e;
+    }
+    h1 {
+        color: #ecf0f1;
+    }
+    .stSubheader {
+        color: #bdc3c7;
+        border-bottom: 2px solid #e67e22;
+    }
+    .stTextInput > label, .stDateInput > label, .stNumberInput > label, 
+    .stTextArea > label, .stSelectbox > label {
+        color: #ecf0f1;
+    }
+    .stForm {
+        background-color: rgba(52, 73, 94, 0.8);
+        border: 1px solid #5d6d7e;
     }
     </style>
     """, unsafe_allow_html=True)
 else:
     st.markdown("""
     <style>
+    .stApp {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .main .block-container {
+        background-color: rgba(255, 255, 255, 0.95);
+        color: #2c3e50;
+    }
     .stDataFrame {
-        background-color: rgba(255,255,255,0.95);
-        color: black;
+        background-color: rgba(255,255,255,0.98);
+        color: #2c3e50;
+        border: 1px solid #e0e6ed;
     }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🚗 Car Flipping CRM")
+st.title("🏢 VelocityCarDeals - Professional CRM System")
 
 # Form to add new car
 with st.form("add_car_form"):
@@ -184,50 +306,87 @@ with st.form("add_car_form"):
             })
             
             for i, row in sample_market_data.iterrows():
-                col1, col2 = st.columns([4, 1])
-                with col1:
-                    st.markdown(f"**{row['Year']} {row['Make']} {row['Model']}**")
-                    st.markdown(f"Trim: Unknown | Mileage: {row['Mileage']:,} | Price: ${row['Price ($)']:,} | Location: {row['Location']}")
-                    st.markdown(f"Dealership: {row['Dealership']} | Phone: {row['Phone']}")
+                # Professional card layout for market data
+                st.markdown(f"""
+                <div class="market-card">
+                    <h4 style="color: #2c3e50; margin-bottom: 0.5rem;">{row['Year']} {row['Make']} {row['Model']}</h4>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span><strong>Mileage:</strong> {row['Mileage']:,} mi</span>
+                        <span><strong>Price:</strong> <span style="color: #27ae60; font-weight: bold;">${row['Price ($)']:,}</span></span>
+                    </div>
+                    <div style="margin-bottom: 0.5rem;">
+                        <strong>Location:</strong> {row['Location']}
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>Dealer:</strong> {row['Dealership']}<br>
+                            <strong>Phone:</strong> {row['Phone']}
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
                 
-                with col2:
+                col1, col2, col3 = st.columns([1, 1, 1])
+                with col1:
+                with col1:
                     if st.button(f"📞 Call {row['Dealership']}", key=f"call_{i}"):
                         st.write(f"Dialing {row['Phone']}...")
-                    
+                
+                with col2:
                     if st.button(f"⭐ Save Contact", key=f"save_{i}"):
                         contact = pd.DataFrame([[row['Dealership'], row['Phone'], "Seller", ""]], 
                                              columns=st.session_state.contact_data.columns)
                         st.session_state.contact_data = pd.concat([st.session_state.contact_data, contact], ignore_index=True)
                         st.success(f"Contact for {row['Dealership']} saved!")
 
+                with col3:
+                    if st.button(f"📧 Email", key=f"quick_email_{i}"):
+                        st.session_state[f"show_email_{i}"] = not st.session_state.get(f"show_email_{i}", False)
+
+                # Email section (only show if button clicked)
+                if st.session_state.get(f"show_email_{i}", False):
+                if st.session_state.get(f"show_email_{i}", False):
                     # Email message template
                     email_message = (
-                        f"Subject: Vehicle Sourcing Inquiry\n\n"
-                        f"Hello {row['Dealership']},\n\n"
-                        f"My name is Anthony Rodas from VelocityBrokerDeals. I'm interested in the {row['Year']} {row['Make']} {row['Model']} listed at your dealership.\n\n"
-                        f"Please call or email me back at AnthonyRodas@velocitycarssale.com or 949-796-2933.\n\n"
-                        f"Best,\nAnthony Rodas\nVelocityBrokerDeals"
+                        f"Subject: Vehicle Sourcing Inquiry - {row['Year']} {row['Make']} {row['Model']}\n\n"
+                        f"Dear {row['Dealership']} Team,\n\n"
+                        f"I hope this message finds you well. My name is Anthony Rodas, and I represent VelocityCarDeals, "
+                        f"a professional automotive sourcing company.\n\n"
+                        f"I am currently seeking a {row['Year']} {row['Make']} {row['Model']} for one of our clients. "
+                        f"I noticed you may have this vehicle available and would like to discuss potential acquisition.\n\n"
+                        f"We are serious cash buyers with immediate funding available and can close quickly. "
+                        f"If you have this vehicle or similar inventory, please contact me at your earliest convenience.\n\n"
+                        f"Contact Information:\n"
+                        f"Email: AnthonyRodas@velocitycarssale.com\n"
+                        f"Phone: 949-796-2933\n\n"
+                        f"Thank you for your time and consideration. I look forward to establishing a mutually beneficial business relationship.\n\n"
+                        f"Best regards,\n"
+                        f"Anthony Rodas\n"
+                        f"Senior Acquisition Specialist\n"
+                        f"VelocityCarDeals"
                     )
 
-                    st.text_area("📧 Email Template", value=email_message, height=180, key=f"email_template_{i}")
+                    st.text_area("📧 Professional Email Template", value=email_message, height=200, key=f"email_template_{i}")
 
                     recipient_email = st.text_input(f"Enter email for {row['Dealership']}", key=f"email_input_{i}")
                     if st.button(f"📨 Send Email to {row['Dealership']}", key=f"email_{i}") and recipient_email:
                         try:
-                            send_email_gmail(recipient_email, "Vehicle Sourcing Inquiry", email_message)
-                            st.success("Email sent successfully!")
+                            send_email_gmail(recipient_email, f"Vehicle Sourcing Inquiry - {row['Year']} {row['Make']} {row['Model']}", email_message)
+                            st.success("Professional email sent successfully!")
                         except Exception as e:
                             st.error(f"Failed to send email: {e}")
 
-                    # SMS message template
+                    # Professional SMS message template
                     sms_message = (
-                        f"Hi, I'm interested in your {row['Year']} {row['Make']} {row['Model']}. "
-                        f"Please text or call me back at 949-796-2933. -Anthony"
+                        f"Hello {row['Dealership']}, this is Anthony from VelocityCarDeals. "
+                        f"I'm interested in your {row['Year']} {row['Make']} {row['Model']}. "
+                        f"We're cash buyers ready to close quickly. Please call me at 949-796-2933. Thank you."
                     )
 
-                    st.text_area("📱 SMS Template", value=sms_message, height=80, key=f"sms_template_{i}")
-                    st.markdown(f"[📞 Call Now](https://voice.google.com/u/0/calls?a=nc,{row['Phone'].replace('-', '')})")
-                    st.markdown(f"📧 Saved message for {row['Dealership']} with phone {row['Phone']}.")
+                    st.text_area("📱 Professional SMS Template", value=sms_message, height=100, key=f"sms_template_{i}")
+                    st.markdown(f"[📞 Direct Call](https://voice.google.com/u/0/calls?a=nc,{row['Phone'].replace('-', '')})")
+                
+                st.markdown("---")  # Professional separator between listings
         else:
             st.info("Enter Make and Model to fetch market data.")
 
