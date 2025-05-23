@@ -1,4 +1,4 @@
-import streamlit as st
+# Pasimport streamlit as st
 import pandas as pd
 from datetime import datetime, date, timedelta
 import base64
@@ -607,12 +607,9 @@ def generate_sales_pitch(customer_type, vehicle_type, budget_range):
         "Trade-in customer": f"Perfect timing for a trade-in! Your current vehicle has served you well, and this {vehicle_type.lower()} represents the next step up. With trade-in value applied to this {budget_range} vehicle, you're getting exceptional value and upgraded features.",
         "Cash buyer": f"Excellent! As a cash buyer, you have significant negotiating power. This {vehicle_type.lower()} in the {budget_range} range represents outstanding value, and with cash purchase, we can offer additional incentives and immediate ownership benefits."
     }
-    
     pitch = pitches.get(customer_type, "Let me help you find the perfect vehicle for your needs!")
-    
     st.success("Generated Sales Pitch:")
     st.markdown(f"**{pitch}**")
-    
     st.write("**Key talking points:**")
     st.write("• Emphasize value proposition")
     st.write("• Highlight safety and reliability features")  
@@ -621,7 +618,6 @@ def generate_sales_pitch(customer_type, vehicle_type, budget_range):
 
 def handle_mmr_calculator():
     st.write("Market Maker Report (MMR) Calculator")
-    
     col1, col2 = st.columns(2)
     with col1:
         mmr_make = st.text_input("Make", key="mmr_make")
@@ -630,7 +626,6 @@ def handle_mmr_calculator():
     with col2:
         mileage = st.number_input("Mileage", min_value=0, step=1000, key="mmr_mileage")
         condition = st.selectbox("Condition", ["Excellent", "Good", "Fair", "Poor"])
-    
     if st.button("Calculate MMR", type="primary"):
         if mmr_make and mmr_model and mmr_year:
             calculate_mmr(mmr_make, mmr_model, mmr_year, mileage, condition)
@@ -639,4 +634,24 @@ def handle_mmr_calculator():
 
 def calculate_mmr(make, model, year, mileage, condition):
     # Simplified MMR calculation (replace with real MMR API)
-    base_value = 25000  # This would come from MMR
+    base_value = 25000
+    mileage_penalty = (mileage // 10000) * 500
+    condition_factor = {
+        "Excellent": 1.05,
+        "Good": 1.0,
+        "Fair": 0.9,
+        "Poor": 0.8
+    }
+    value = base_value - mileage_penalty
+    value *= condition_factor.get(condition, 1.0)
+    value = max(value, 2000)  # Minimum value
+    st.success(f"Estimated MMR for {year} {make} {model}: ${value:,.2f}")
+
+# Initialize session state on first run
+if "initialized" not in st.session_state:
+    initialize_session_state()
+    st.session_state.initialized = True
+
+# Run the main application
+if __name__ == "__main__":
+    main()
