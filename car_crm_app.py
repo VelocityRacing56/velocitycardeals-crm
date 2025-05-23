@@ -1,4 +1,4 @@
-# Pasimport streamlit as st
+import streamlit as st
 import pandas as pd
 from datetime import datetime, date, timedelta
 import base64
@@ -11,7 +11,6 @@ try:
     PLOTLY_AVAILABLE = True
 except ImportError:
     PLOTLY_AVAILABLE = False
-    st.warning("Plotly not available. Install with: pip install plotly")
 
 # Gmail API imports with error handling
 try:
@@ -177,6 +176,10 @@ def send_email_gmail(recipient, subject, body_text):
 # Main application logic
 def main():
     st.title("🏢 VelocityCarDeals - Professional CRM System")
+
+    # Show Plotly warning if not available
+    if not PLOTLY_AVAILABLE:
+        st.warning("Plotly not available. Install with: pip install plotly")
 
     # Sidebar navigation
     st.sidebar.title("🚗 Navigation")
