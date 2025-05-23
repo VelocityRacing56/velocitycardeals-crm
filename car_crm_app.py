@@ -195,17 +195,23 @@ def send_email_gmail(recipient, subject, body_text):
 # To initiate a call, you could simulate with a link or instruct the user:
 # Use: https://voice.google.com/u/0/calls?a=nc,{phone_number}
 # You may also instruct the user to copy/paste the number into Google Voice manually.
-                        email_message = f"Subject: Vehicle Sourcing Inquiry
+                        email_message = (
+    f"Subject: Vehicle Sourcing Inquiry
 
-Hello {row['Dealership']},
+"
+    f"Hello {row['Dealership']},
 
-My name is Anthony Rodas from VelocityBrokerDeals. I'm interested in the {row['Year']} {row['Make']} {row['Model']} listed at your dealership.
+"
+    f"My name is Anthony Rodas from VelocityBrokerDeals. I'm interested in the {row['Year']} {row['Make']} {row['Model']} listed at your dealership.
 
-Please call or email me back at AnthonyRodas@velocitycarssale.com or 949-796-2933.
+"
+    f"Please call or email me back at AnthonyRodas@velocitycarssale.com or 949-796-2933.
 
-Best,
+"
+    f"Best,
 Anthony Rodas
 VelocityBrokerDeals"
+)
                     sms_message = f"Hi, this is Anthony Rodas from VelocityBrokerDeals. I'm interested in your {row['Year']} {row['Make']} {row['Model']}. Please call/text 949-796-2933."
 
                     st.text_area("📧 Email Template", value=email_message, height=180)
