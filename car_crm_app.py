@@ -204,7 +204,7 @@ email_message = (
 )
 
 
-                    st.text_area("📧 Email Template", value=email_message, height=180)
+                                        st.text_area("📧 Email Template", value=email_message, height=180)
                     if st.button(f"📨 Send Email to {row['Dealership']}", key=f"email_{i}"):
                         recipient_email = st.text_input(f"Enter email for {row['Dealership']}", key=f"email_input_{i}")
                         if recipient_email:
