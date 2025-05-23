@@ -1,7 +1,7 @@
 # Streamlit Car Flipping CRM App with MMR Calculator
 import streamlit as st
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, date
 
 st.set_page_config(page_title="Car Flipping CRM", layout="wide")
 
@@ -19,23 +19,6 @@ st.markdown("""
         border-radius: 10px;
         padding: 20px;
     }
-    </style>
-""", unsafe_allow_html=True)
-
-# Initialize contact list if not already present
-if "contact_data" not in st.session_state:
-    st.session_state.contact_data = pd.DataFrame(columns=["Name", "Phone", "Type", "Associated VIN"])
-
-
-# Initialize session state if not already present
-if "crm_data" not in st.session_state:
-    st.session_state.crm_data = pd.DataFrame(columns=[
-        "VIN", "Make", "Model", "Year", "Purchase Date", "Purchase Price ($)",
-        "Sold Date", "Sold Price ($)", "Profit ($)", "Status"
-    ])
-
-st.markdown("""
-    <style>
     h1 {
         color: #ff1e1e;
         text-align: center;
@@ -54,10 +37,68 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-from PIL import Image
+# Initialize contact list if not already present
+if "contact_data" not in st.session_state:
+    st.session_state.contact_data = pd.DataFrame(columns=["Name", "Phone", "Type", "Associated VIN"])
 
-logo = Image.open("logo.png")  # Make sure logo.png is in the same directory as your app
-st.sidebar.image(logo, width=200)
+# Initialize session state if not already present
+if "crm_data" not in st.session_state:
+    st.session_state.crm_data = pd.DataFrame(columns=[
+        "VIN", "Make", "Model", "Year", "Purchase Date", "Purchase Price ($)",
+        "Sold Date", "Sold Price ($)", "Profit ($)", "Status"
+    ])
+
+# Initialize follow-up log if not already present
+if "follow_up_log" not in st.session_state:
+    st.session_state.follow_up_log = pd.DataFrame(columns=["Dealership", "Phone", "Email", "Message Sent", "Date Sent", "Needs Follow-Up"])
+
+# Gmail API integration functions
+import base64
+from email.mime.text import MIMEText
+try:
+    from googleapiclient.discovery import build
+    from google_auth_oauthlib.flow import InstalledAppFlow
+    from google.auth.transport.requests import Request
+    import os.path
+    import pickle
+    
+    SCOPES = ['https://www.googleapis.com/auth/gmail.send']
+    
+    def send_email_gmail(recipient, subject, body_text):
+        creds = None
+        if os.path.exists('token.pickle'):
+            with open('token.pickle', 'rb') as token:
+                creds = pickle.load(token)
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    'credentials.json', SCOPES)
+                creds = flow.run_local_server(port=0)
+            with open('token.pickle', 'wb') as token:
+                pickle.dump(creds, token)
+
+        service = build('gmail', 'v1', credentials=creds)
+        message = MIMEText(body_text)
+        message['to'] = recipient
+        message['from'] = 'theofficialadrodas56@gmail.com'
+        message['subject'] = subject
+        raw_message = {'raw': base64.urlsafe_b64encode(message.as_bytes()).decode()}
+        send_message = (service.users().messages().send(userId="me", body=raw_message).execute())
+        return send_message
+except ImportError:
+    def send_email_gmail(recipient, subject, body_text):
+        st.error("Gmail API dependencies not installed. Please install google-auth, google-api-python-client")
+        return None
+
+# Try to load logo, handle if not found
+try:
+    from PIL import Image
+    logo = Image.open("logo.png")
+    st.sidebar.image(logo, width=200)
+except FileNotFoundError:
+    st.sidebar.write("Logo not found - place logo.png in app directory")
 
 # Light/Dark theme toggle
 mode = st.sidebar.radio("🌗 Theme Mode", ["Light", "Dark"])
@@ -97,22 +138,26 @@ with st.form("add_car_form"):
     make = st.text_input("Make")
     model = st.text_input("Model")
     year = st.number_input("Year", min_value=1980, max_value=2030, step=1)
+    contact_name = st.text_input("Seller Name")
+    contact_phone = st.text_input("Seller Phone Number")
     submitted = st.form_submit_button("Add to Watchlist")
+    
     if submitted and vin:
-        new_row = pd.DataFrame([[vin, make, model, year, None, None, None, None, None, "Watch"]], columns=st.session_state.crm_data.columns)
-        # Prompt for contact info associated with this watchlist entry
-        contact_name = st.text_input("Seller Name")
-        contact_phone = st.text_input("Seller Phone Number")
-        if contact_name and contact_phone:
-            new_contact = pd.DataFrame([[contact_name, contact_phone, "Seller", vin]], columns=st.session_state.contact_data.columns)
-            st.session_state.contact_data = pd.concat([st.session_state.contact_data, new_contact], ignore_index=True)
+        new_row = pd.DataFrame([[vin, make, model, year, None, None, None, None, None, "Watch"]], 
+                              columns=st.session_state.crm_data.columns)
         st.session_state.crm_data = pd.concat([st.session_state.crm_data, new_row], ignore_index=True)
+        
+        # Add contact info if provided
+        if contact_name and contact_phone:
+            new_contact = pd.DataFrame([[contact_name, contact_phone, "Seller", vin]], 
+                                     columns=st.session_state.contact_data.columns)
+            st.session_state.contact_data = pd.concat([st.session_state.contact_data, new_contact], ignore_index=True)
+        
         st.success("Car added to watchlist!")
 
         # Simulated API call for similar market listings
         st.subheader("📊 Market Data for Similar Listings")
         if make and model:
-            # NOTE: Replace with actual API call if available (e.g., Edmunds, CarGurus)
             st.markdown(f"Showing recent listings for **{year} {make} {model}**:")
             sample_market_data = pd.DataFrame({
                 'Year': [year]*6,
@@ -137,156 +182,94 @@ with st.form("add_car_form"):
                     '800-555-2300', '602-555-8765', '702-555-3456'
                 ]
             })
+            
             for i, row in sample_market_data.iterrows():
                 col1, col2 = st.columns([4, 1])
                 with col1:
                     st.markdown(f"**{row['Year']} {row['Make']} {row['Model']}**")
                     st.markdown(f"Trim: Unknown | Mileage: {row['Mileage']:,} | Price: ${row['Price ($)']:,} | Location: {row['Location']}")
                     st.markdown(f"Dealership: {row['Dealership']} | Phone: {row['Phone']}")
+                
                 with col2:
                     if st.button(f"📞 Call {row['Dealership']}", key=f"call_{i}"):
                         st.write(f"Dialing {row['Phone']}...")
+                    
                     if st.button(f"⭐ Save Contact", key=f"save_{i}"):
-                        contact = pd.DataFrame([[row['Dealership'], row['Phone'], "Seller", ""]], columns=st.session_state.contact_data.columns)
+                        contact = pd.DataFrame([[row['Dealership'], row['Phone'], "Seller", ""]], 
+                                             columns=st.session_state.contact_data.columns)
                         st.session_state.contact_data = pd.concat([st.session_state.contact_data, contact], ignore_index=True)
                         st.success(f"Contact for {row['Dealership']} saved!")
 
-                    # Add email and SMS message generation
-# ✅ Gmail API integration
-import base64
-from email.mime.text import MIMEText
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
-import os.path
-import pickle
+                    # Email message template
+                    email_message = (
+                        f"Subject: Vehicle Sourcing Inquiry\n\n"
+                        f"Hello {row['Dealership']},\n\n"
+                        f"My name is Anthony Rodas from VelocityBrokerDeals. I'm interested in the {row['Year']} {row['Make']} {row['Model']} listed at your dealership.\n\n"
+                        f"Please call or email me back at AnthonyRodas@velocitycarssale.com or 949-796-2933.\n\n"
+                        f"Best,\nAnthony Rodas\nVelocityBrokerDeals"
+                    )
 
-SCOPES = ['https://www.googleapis.com/auth/gmail.send']
+                    st.text_area("📧 Email Template", value=email_message, height=180, key=f"email_template_{i}")
 
-def send_email_gmail(recipient, subject, body_text):
-    creds = None
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
-            creds = pickle.load(token)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
-            creds = flow.run_local_server(port=0)
-        with open('token.pickle', 'wb') as token:
-            pickle.dump(creds, token)
+                    recipient_email = st.text_input(f"Enter email for {row['Dealership']}", key=f"email_input_{i}")
+                    if st.button(f"📨 Send Email to {row['Dealership']}", key=f"email_{i}") and recipient_email:
+                        try:
+                            send_email_gmail(recipient_email, "Vehicle Sourcing Inquiry", email_message)
+                            st.success("Email sent successfully!")
+                        except Exception as e:
+                            st.error(f"Failed to send email: {e}")
 
-    service = build('gmail', 'v1', credentials=creds)
-    message = MIMEText(body_text)
-    message['to'] = recipient
-    message['from'] = 'theofficialadrodas56@gmail.com'
-    message['subject'] = subject
-    raw_message = {'raw': base64.urlsafe_b64encode(message.as_bytes()).decode()}
-    send_message = (service.users().messages().send(userId="me", body=raw_message).execute())
-    return send_message
-# To enable email sending, integrate Gmail API:
-# 1. Enable Gmail API at https://console.cloud.google.com/
-# 2. Set up OAuth2 credentials for a desktop/web app
-# 3. Use `google-auth`, `google-api-python-client` to send email from AnthonyRodas@velocitycarssale.com
+                    # SMS message template
+                    sms_message = (
+                        f"Hi, I'm interested in your {row['Year']} {row['Make']} {row['Model']}. "
+                        f"Please text or call me back at 949-796-2933. -Anthony"
+                    )
 
-# ✅ Google Voice call placeholder
-# To initiate a call, you could simulate with a link or instruct the user:
-# Use: https://voice.google.com/u/0/calls?a=nc,{phone_number}
-with col2:
-    if st.button(f"📞 Call {row['Dealership']}", key=f"call_{i}"):
-        st.write(f"Dialing {row['Phone']}...")
-
-    if st.button(f"⭐ Save Contact", key=f"save_{i}"):
-        contact = pd.DataFrame([[row['Dealership'], row['Phone'], "Seller", ""]], columns=st.session_state.contact_data.columns)
-        st.session_state.contact_data = pd.concat([st.session_state.contact_data, contact], ignore_index=True)
-        st.success(f"Contact for {row['Dealership']} saved!")
-
-    email_message = (
-        f"Subject: Vehicle Sourcing Inquiry\n\n"
-        f"Hello {row['Dealership']},\n\n"
-        f"My name is Anthony Rodas from VelocityBrokerDeals. I'm interested in the {row['Year']} {row['Make']} {row['Model']} listed at your dealership.\n\n"
-        f"Please call or email me back at AnthonyRodas@velocitycarssale.com or 949-796-2933.\n\n"
-        f"Best,\nAnthony Rodas\nVelocityBrokerDeals"
-    )
-
-    st.text_area("📧 Email Template", value=email_message, height=180)
-
-    recipient_email = st.text_input(f"Enter email for {row['Dealership']}", key=f"email_input_{i}")
-    if st.button(f"📨 Send Email to {row['Dealership']}", key=f"email_{i}") and recipient_email:
-        try:
-            send_email_gmail(recipient_email, "Vehicle Sourcing Inquiry", email_message)
-            st.success("Email sent successfully!")
-        except Exception as e:
-            st.error(f"Failed to send email: {e}")
-
-    sms_message = (
-        f"Hi, I'm interested in your {row['Year']} {row['Make']} {row['Model']}. "
-        f"Please text or call me back at 949-796-2933. -Anthony"
-    )
-
-    st.text_area("📱 SMS Template", value=sms_message, height=80)
-    st.markdown(f"[📞 Call Now](https://voice.google.com/u/0/calls?a=nc,{row['Phone'].replace('-', '')})")
-    st.markdown(f"📧 Saved message for {row['Dealership']} with phone {row['Phone']}.")
-
-    recipient_email = st.text_input(f"Enter email for {row['Dealership']}", key=f"email_input_{i}")
-if st.button(f"📨 Send Email to {row['Dealership']}", key=f"email_{i}") and recipient_email:
-recipient_email = st.text_input(f"Enter email for {row['Dealership']}", key=f"email_input_{i}")
-
-if st.button(f"📨 Send Email to {row['Dealership']}", key=f"email_{i}") and recipient_email:
-    try:
-        send_email_gmail(recipient_email, "Vehicle Sourcing Inquiry", email_message)
-        st.success("Email sent successfully!")
-    except Exception as e:
-        st.error(f"Failed to send email: {e}")
-
-sms_message = (
-    f"Hi, I'm interested in your {row['Year']} {row['Make']} {row['Model']}. "
-    f"Please text or call me back at 949-796-2933. -Anthony"
-)
-
-st.text_area("📱 SMS Template", value=sms_message, height=80)
-st.markdown(f"[📞 Call Now](https://voice.google.com/u/0/calls?a=nc,{row['Phone'].replace('-', '')})")
-st.markdown(f"📧 Saved message for {row['Dealership']} with phone {row['Phone']}.")
-
-
-st.text_area("📱 SMS Template", value=sms_message, height=80)
-st.markdown(f"[📞 Call Now](https://voice.google.com/u/0/calls?a=nc,{row['Phone'].replace('-', '')})")
-st.markdown(f"📧 Saved message for {row['Dealership']} with phone {row['Phone']}.")
-
+                    st.text_area("📱 SMS Template", value=sms_message, height=80, key=f"sms_template_{i}")
+                    st.markdown(f"[📞 Call Now](https://voice.google.com/u/0/calls?a=nc,{row['Phone'].replace('-', '')})")
+                    st.markdown(f"📧 Saved message for {row['Dealership']} with phone {row['Phone']}.")
         else:
             st.info("Enter Make and Model to fetch market data.")
 
 # Section to mark as purchased
 st.subheader("💵 Mark a Car as Purchased")
-purchase_vin = st.selectbox("Select VIN to mark as purchased", st.session_state.crm_data[st.session_state.crm_data["Status"] == "Watch"]["VIN"])
-purchase_date = st.date_input("Purchase Date")
-purchase_price = st.number_input("Purchase Price ($)", min_value=0.0, step=100.0)
-if st.button("Update Purchase Info"):
-    idx = st.session_state.crm_data[st.session_state.crm_data["VIN"] == purchase_vin].index
-    if not idx.empty:
-        st.session_state.crm_data.loc[idx, "Purchase Date"] = pd.to_datetime(purchase_date)
-        st.session_state.crm_data.loc[idx, "Purchase Price ($)"] = purchase_price
-        st.session_state.crm_data.loc[idx, "Status"] = "Purchased"
-        st.success("Car marked as purchased!")
+if not st.session_state.crm_data.empty:
+    watch_cars = st.session_state.crm_data[st.session_state.crm_data["Status"] == "Watch"]["VIN"].tolist()
+    if watch_cars:
+        purchase_vin = st.selectbox("Select VIN to mark as purchased", watch_cars)
+        purchase_date = st.date_input("Purchase Date")
+        purchase_price = st.number_input("Purchase Price ($)", min_value=0.0, step=100.0)
+        if st.button("Update Purchase Info"):
+            idx = st.session_state.crm_data[st.session_state.crm_data["VIN"] == purchase_vin].index
+            if not idx.empty:
+                st.session_state.crm_data.loc[idx, "Purchase Date"] = pd.to_datetime(purchase_date)
+                st.session_state.crm_data.loc[idx, "Purchase Price ($)"] = purchase_price
+                st.session_state.crm_data.loc[idx, "Status"] = "Purchased"
+                st.success("Car marked as purchased!")
+    else:
+        st.info("No cars in watchlist to mark as purchased.")
 
 # Section to mark as sold
 st.subheader("💰 Mark a Car as Sold")
-sold_vin = st.selectbox("Select VIN to mark as sold", st.session_state.crm_data[st.session_state.crm_data["Status"] == "Purchased"]["VIN"])
-sold_date = st.date_input("Sold Date")
-sold_price = st.number_input("Sold Price ($)", min_value=0.0, step=100.0)
-if st.button("Update Sold Info"):
-    idx = st.session_state.crm_data[st.session_state.crm_data["VIN"] == sold_vin].index
-    if not idx.empty:
-        st.session_state.crm_data.loc[idx, "Sold Date"] = pd.to_datetime(sold_date)
-        st.session_state.crm_data.loc[idx, "Sold Price ($)"] = sold_price
-        purchase_price = st.session_state.crm_data.loc[idx, "Purchase Price ($)"].values[0]
-        if pd.notna(purchase_price):
-            profit = sold_price - float(purchase_price)
-            st.session_state.crm_data.loc[idx, "Profit ($)"] = profit
-            st.session_state.crm_data.loc[idx, "Status"] = "Sold"
-            st.success("Car marked as sold!")
+if not st.session_state.crm_data.empty:
+    purchased_cars = st.session_state.crm_data[st.session_state.crm_data["Status"] == "Purchased"]["VIN"].tolist()
+    if purchased_cars:
+        sold_vin = st.selectbox("Select VIN to mark as sold", purchased_cars)
+        sold_date = st.date_input("Sold Date")
+        sold_price = st.number_input("Sold Price ($)", min_value=0.0, step=100.0)
+        if st.button("Update Sold Info"):
+            idx = st.session_state.crm_data[st.session_state.crm_data["VIN"] == sold_vin].index
+            if not idx.empty:
+                st.session_state.crm_data.loc[idx, "Sold Date"] = pd.to_datetime(sold_date)
+                st.session_state.crm_data.loc[idx, "Sold Price ($)"] = sold_price
+                purchase_price = st.session_state.crm_data.loc[idx, "Purchase Price ($)"].values[0]
+                if pd.notna(purchase_price):
+                    profit = sold_price - float(purchase_price)
+                    st.session_state.crm_data.loc[idx, "Profit ($)"] = profit
+                    st.session_state.crm_data.loc[idx, "Status"] = "Sold"
+                    st.success("Car marked as sold!")
+    else:
+        st.info("No purchased cars to mark as sold.")
 
 # Dealer Offer Builder
 st.subheader("📦 Create Dealer Offer Sheet")
@@ -301,15 +284,16 @@ with st.form("create_offer"):
     offer_price = st.number_input("Offer Price ($)", min_value=0.0, step=100.0)
     notes = st.text_area("Notes")
     offer_submit = st.form_submit_button("Generate Offer")
+    
     if offer_submit and offer_vin and offer_make and offer_model:
         offer_output = f"""
-        ### 🔖 Dealer Offer Sheet
-        - **VIN**: {offer_vin}  
-        - **Stock #:** {stock_number}  
-        - **Make / Model / Trim:** {offer_make} {offer_model} {offer_trim}  
-        - **Mileage:** {offer_mileage:,} miles  
-        - **Offer Price:** 💵 ${offer_price:,.2f}  
-        - **Notes:** {notes}
+### 🔖 Dealer Offer Sheet
+- **VIN**: {offer_vin}  
+- **Stock #:** {stock_number}  
+- **Make / Model / Trim:** {offer_make} {offer_model} {offer_trim}  
+- **Mileage:** {offer_mileage:,} miles  
+- **Offer Price:** 💵 ${offer_price:,.2f}  
+- **Notes:** {notes}
         """
         st.markdown(offer_output)
         st.download_button(
@@ -342,9 +326,6 @@ if not st.session_state.crm_data["Sold Date"].dropna().empty:
 
 # Email and Contact Follow-up Tracker
 st.subheader("📬 Follow-up Log & Tracker")
-if "follow_up_log" not in st.session_state:
-    st.session_state.follow_up_log = pd.DataFrame(columns=["Dealership", "Phone", "Email", "Message Sent", "Date Sent", "Needs Follow-Up"])
-
 with st.form("follow_up_entry"):
     follow_name = st.text_input("Dealership Name")
     follow_phone = st.text_input("Phone Number")
@@ -353,29 +334,25 @@ with st.form("follow_up_entry"):
     follow_date = st.date_input("Date Sent")
     needs_follow = st.checkbox("Needs Follow-Up?", value=True)
     follow_submit = st.form_submit_button("Log Communication")
+    
     if follow_submit:
-        new_log = pd.DataFrame([[follow_name, follow_phone, follow_email, follow_msg, follow_date, needs_follow]], columns=st.session_state.follow_up_log.columns)
+        new_log = pd.DataFrame([[follow_name, follow_phone, follow_email, follow_msg, follow_date, needs_follow]], 
+                              columns=st.session_state.follow_up_log.columns)
         st.session_state.follow_up_log = pd.concat([st.session_state.follow_up_log, new_log], ignore_index=True)
         st.success("Follow-up logged!")
 
 if not st.session_state.follow_up_log.empty:
-    from datetime import date
-
-# Highlight rows needing follow-up
-styled_follow_up = st.session_state.follow_up_log.copy()
-styled_follow_up["RowColor"] = styled_follow_up["Needs Follow-Up"].apply(lambda x: "background-color: #fff3cd" if x else "")
-
-# Render styled dataframe
-st.dataframe(
-    styled_follow_up.drop(columns=["RowColor"]),
-    use_container_width=True
-)
     st.subheader("🔍 View Follow-Ups Needed")
     follow_up_only = st.checkbox("Show only contacts needing follow-up")
     if follow_up_only:
-        filtered_log = st.session_state.follow_up_log[st.session_state.follow_up_log["Needs Follow-Up"] == True]
-        filtered_log["Days Since Contact"] = (date.today() - filtered_log["Date Sent"]).dt.days
-st.dataframe(filtered_log)
+        filtered_log = st.session_state.follow_up_log[st.session_state.follow_up_log["Needs Follow-Up"] == True].copy()
+        if not filtered_log.empty:
+            filtered_log["Days Since Contact"] = (date.today() - pd.to_datetime(filtered_log["Date Sent"])).dt.days
+            st.dataframe(filtered_log)
+        else:
+            st.info("No follow-ups needed!")
+    else:
+        st.dataframe(st.session_state.follow_up_log)
 
 # Contact management section
 st.subheader("📞 Contacts")
@@ -386,8 +363,10 @@ with st.form("add_contact"):
     contact_type = st.selectbox("Type", ["Seller", "Buyer"])
     associated_vin = st.text_input("Associated VIN (optional)")
     contact_submitted = st.form_submit_button("Add Contact")
+    
     if contact_submitted and contact_name and contact_phone:
-        new_contact = pd.DataFrame([[contact_name, contact_phone, contact_type, associated_vin]], columns=st.session_state.contact_data.columns)
+        new_contact = pd.DataFrame([[contact_name, contact_phone, contact_type, associated_vin]], 
+                                  columns=st.session_state.contact_data.columns)
         st.session_state.contact_data = pd.concat([st.session_state.contact_data, new_contact], ignore_index=True)
         st.success("Contact added!")
 
@@ -395,8 +374,11 @@ st.dataframe(st.session_state.contact_data)
 
 # Export to Excel
 st.subheader("📤 Export CRM to Excel")
-if st.download_button("Download Excel Report", data=st.session_state.crm_data.to_csv(index=False).encode("utf-8"), file_name="CarFlipCRM_Report.csv", mime="text/csv"):
-    st.success("Excel report downloaded!")
+if st.download_button("Download CSV Report", 
+                     data=st.session_state.crm_data.to_csv(index=False).encode("utf-8"), 
+                     file_name="CarFlipCRM_Report.csv", 
+                     mime="text/csv"):
+    st.success("CSV report downloaded!")
 
 # AI Assistant for Pitch Generation
 st.subheader("🤖 AI Assistant: Generate a Pitch to Find a Car")
@@ -405,7 +387,6 @@ if st.button("Generate Pitch"):
     if car_description:
         pitch = f"Hi, I'm looking for a vehicle with the following specs: {car_description}. If you have something that fits or close, let me know. Cash buyer, ready to move fast."
         st.markdown(f"**Generated Pitch:**\n\n{pitch}")
-
         st.download_button("📄 Download Pitch", data=pitch, file_name="Pitch.txt", mime="text/plain")
     else:
         st.warning("Please describe the car you're looking for.")
