@@ -195,7 +195,7 @@ def send_email_gmail(recipient, subject, body_text):
 # To initiate a call, you could simulate with a link or instruct the user:
 # Use: https://voice.google.com/u/0/calls?a=nc,{phone_number}
 # You may also instruct the user to copy/paste the number into Google Voice manually.
-                    email_message = f"""Subject: Vehicle Sourcing Inquiry
+                        email_message = f"""Subject: Vehicle Sourcing Inquiry
 
 Hello {row['Dealership']},
 
