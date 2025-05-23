@@ -236,13 +236,15 @@ if st.button(f"📨 Send Email to {row['Dealership']}", key=f"email_{i}") and re
         send_email_gmail(recipient_email, "Vehicle Sourcing Inquiry", email_message)
         st.success("Email sent successfully!")
     except Exception as e:
-        st.error(f"Failed to send email: {e}")
+sms_message = (
+    f"Hi, I'm interested in your {row['Year']} {row['Make']} {row['Model']}. "
+    f"Please text or call me back at 949-796-2933. -Anthony"
+)
 
-                    st.markdown(f"[📞 Call Now](https://voice.google.com/u/0/calls?a=nc,{row['Phone'].replace('-', '')})")
-                    st.markdown(f"📧 Saved message for {row['Dealership']} with phone {row['Phone']}.")
-                        contact = pd.DataFrame([[row['Dealership'], row['Phone'], "Seller", ""]], columns=st.session_state.contact_data.columns)
-                        st.session_state.contact_data = pd.concat([st.session_state.contact_data, contact], ignore_index=True)
-                        st.success(f"Contact for {row['Dealership']} saved!")
+st.text_area("📱 SMS Template", value=sms_message, height=80)
+st.markdown(f"[📞 Call Now](https://voice.google.com/u/0/calls?a=nc,{row['Phone'].replace('-', '')})")
+st.markdown(f"📧 Saved message for {row['Dealership']} with phone {row['Phone']}.")
+
         else:
             st.info("Enter Make and Model to fetch market data.")
 
