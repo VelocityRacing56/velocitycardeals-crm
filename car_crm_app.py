@@ -194,23 +194,42 @@ def send_email_gmail(recipient, subject, body_text):
 # ✅ Google Voice call placeholder
 # To initiate a call, you could simulate with a link or instruct the user:
 # Use: https://voice.google.com/u/0/calls?a=nc,{phone_number}
-# You may also instruct the user to copy/paste the number into Google Voice manually.
-email_message = (
-    f"Subject: Vehicle Sourcing Inquiry\n\n"
-    f"Hello {row['Dealership']},\n\n"
-    f"My name is Anthony Rodas from VelocityBrokerDeals. I'm interested in the {row['Year']} {row['Make']} {row['Model']} listed at your dealership.\n\n"
-    f"Please call or email me back at AnthonyRodas@velocitycarssale.com or 949-796-2933.\n\n"
-    f"Best,\nAnthony Rodas\nVelocityBrokerDeals"
-)
+with col2:
+    if st.button(f"📞 Call {row['Dealership']}", key=f"call_{i}"):
+        st.write(f"Dialing {row['Phone']}...")
 
+    if st.button(f"⭐ Save Contact", key=f"save_{i}"):
+        contact = pd.DataFrame([[row['Dealership'], row['Phone'], "Seller", ""]], columns=st.session_state.contact_data.columns)
+        st.session_state.contact_data = pd.concat([st.session_state.contact_data, contact], ignore_index=True)
+        st.success(f"Contact for {row['Dealership']} saved!")
 
-                                        st.text_area("📧 Email Template", value=email_message, height=180)
-                    if st.button(f"📨 Send Email to {row['Dealership']}", key=f"email_{i}"):
-                        recipient_email = st.text_input(f"Enter email for {row['Dealership']}", key=f"email_input_{i}")
-                        if recipient_email:
-                            try:
-                                send_email_gmail(recipient_email, "Vehicle Sourcing Inquiry", email_message)
-                                st.success("Email sent successfully!")
+    email_message = (
+        f"Subject: Vehicle Sourcing Inquiry\n\n"
+        f"Hello {row['Dealership']},\n\n"
+        f"My name is Anthony Rodas from VelocityBrokerDeals. I'm interested in the {row['Year']} {row['Make']} {row['Model']} listed at your dealership.\n\n"
+        f"Please call or email me back at AnthonyRodas@velocitycarssale.com or 949-796-2933.\n\n"
+        f"Best,\nAnthony Rodas\nVelocityBrokerDeals"
+    )
+
+    st.text_area("📧 Email Template", value=email_message, height=180)
+
+    recipient_email = st.text_input(f"Enter email for {row['Dealership']}", key=f"email_input_{i}")
+    if st.button(f"📨 Send Email to {row['Dealership']}", key=f"email_{i}") and recipient_email:
+        try:
+            send_email_gmail(recipient_email, "Vehicle Sourcing Inquiry", email_message)
+            st.success("Email sent successfully!")
+        except Exception as e:
+            st.error(f"Failed to send email: {e}")
+
+    sms_message = (
+        f"Hi, I'm interested in your {row['Year']} {row['Make']} {row['Model']}. "
+        f"Please text or call me back at 949-796-2933. -Anthony"
+    )
+
+    st.text_area("📱 SMS Template", value=sms_message, height=80)
+    st.markdown(f"[📞 Call Now](https://voice.google.com/u/0/calls?a=nc,{row['Phone'].replace('-', '')})")
+    st.markdown(f"📧 Saved message for {row['Dealership']} with phone {row['Phone']}.")
+
                             except Exception as e:
                                 st.error(f"Failed to send email: {e}")
                         try:
