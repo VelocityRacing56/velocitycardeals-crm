@@ -196,6 +196,18 @@ def send_email_gmail(recipient, subject, body_text):
 # Use: https://voice.google.com/u/0/calls?a=nc,{phone_number}
 # You may also instruct the user to copy/paste the number into Google Voice manually.
                     email_message = f"""
+Subject: Vehicle Sourcing Inquiry
+
+Hello {row['Dealership']},
+
+My name is Anthony Rodas from VelocityBrokerDeals. I'm interested in the {row['Year']} {row['Make']} {row['Model']} listed at your dealership.
+
+Please call or email me back at AnthonyRodas@velocitycarssale.com or 949-796-2933.
+
+Best,
+Anthony Rodas
+VelocityBrokerDeals
+"""
                     Subject: Vehicle Sourcing Inquiry
 
                     Hello {row['Dealership']},
