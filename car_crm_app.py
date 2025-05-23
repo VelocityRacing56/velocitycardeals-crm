@@ -235,7 +235,9 @@ if st.button(f"📨 Send Email to {row['Dealership']}", key=f"email_{i}") and re
     try:
         send_email_gmail(recipient_email, "Vehicle Sourcing Inquiry", email_message)
         st.success("Email sent successfully!")
-    except Exception as e:
+except Exception as e:
+    st.error(f"Failed to send email: {e}")
+
 sms_message = (
     f"Hi, I'm interested in your {row['Year']} {row['Make']} {row['Model']}. "
     f"Please text or call me back at 949-796-2933. -Anthony"
