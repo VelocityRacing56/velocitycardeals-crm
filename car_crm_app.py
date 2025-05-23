@@ -230,13 +230,12 @@ with col2:
     st.markdown(f"[📞 Call Now](https://voice.google.com/u/0/calls?a=nc,{row['Phone'].replace('-', '')})")
     st.markdown(f"📧 Saved message for {row['Dealership']} with phone {row['Phone']}.")
 
-                            except Exception as e:
-                                st.error(f"Failed to send email: {e}")
-                        try:
-                            send_email_gmail(row['Phone'] + "@example.com", "Vehicle Sourcing Inquiry", email_message)
-                            st.success("Email sent successfully!")
-                        except Exception as e:
-                            st.error(f"Failed to send email: {e}")
+                           if st.button(f"📨 Send Email to {row['Dealership']}", key=f"email_{i}") and recipient_email:
+    try:
+        send_email_gmail(recipient_email, "Vehicle Sourcing Inquiry", email_message)
+        st.success("Email sent successfully!")
+    except Exception as e:
+        st.error(f"Failed to send email: {e}"))
                     st.text_area("📱 SMS Template", value=sms_message, height=80)
                     st.markdown(f"[📞 Call Now](https://voice.google.com/u/0/calls?a=nc,{row['Phone'].replace('-', '')})")
                     st.markdown(f"📧 Saved message for {row['Dealership']} with phone {row['Phone']}.")
